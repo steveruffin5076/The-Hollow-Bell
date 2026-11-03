@@ -105,6 +105,20 @@ describe("kneeling watchman", () => {
     expect(boss.state).toBe("idle");
     expect(boss.health.hp).toBe(BOSS.maxHp);
   });
+
+  it("a rest does not bring back a spared or defeated Watchman", () => {
+    const spared = new Boss(4, origin, () => 1);
+    spared.spare();
+    spared.reset();
+    expect(spared.state).toBe("spared");
+    expect(spared.alive).toBe(false);
+
+    const fallen = new Boss(4, origin, () => 1);
+    fallen.receiveHit(BOSS.maxHp, dummySwing());
+    fallen.reset();
+    expect(fallen.state).toBe("dead");
+    expect(fallen.health.alive).toBe(false);
+  });
 });
 
 function dummySwing(): Swing {

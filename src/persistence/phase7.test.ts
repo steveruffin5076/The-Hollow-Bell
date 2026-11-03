@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { anchorFor } from "../data/world";
+import { ARCHER, ENEMY } from "../data/combatConfig";
+import { MAPS, anchorFor } from "../data/world";
 import { freshSession, sessionFromSave } from "../game/session";
 import { MemoryStorage, loadSave, loadSettings, saveSettings, writeSave } from "./save";
 
@@ -102,5 +103,24 @@ describe("saves", () => {
     saveSettings(storage, { master: 0.2, muted: true, shake: false, reducedFlash: true });
     expect(loadSettings(storage)).toEqual({ master: 0.2, muted: true, shake: false, reducedFlash: true });
     expect(storage.getItem("hollow-bell-save")).toBeNull();
+  });
+});
+
+describe("road rest stone", () => {
+  it("can be used from any side without waking the wraith or the archer", () => {
+    const { checkpoint, melee, archers, doors } = MAPS.approach;
+    const spawns = [
+      ...melee.map((spawn) => ({ pos: spawn.pos, aggro: ENEMY.aggroRange })),
+      ...archers.map((spawn) => ({ pos: spawn.pos, aggro: ARCHER.aggroRange })),
+    ];
+    for (const foe of spawns) {
+      const centre = Math.hypot(foe.pos.x - checkpoint.position.x, foe.pos.y - checkpoint.position.y);
+      // The closest point the player can rest from is interactRange nearer to the enemy.
+      expect(centre - checkpoint.interactRange).toBeGreaterThan(foe.aggro);
+    }
+    for (const door of doors) {
+      const gap = Math.hypot(door.pos.x - checkpoint.position.x, door.pos.y - checkpoint.position.y);
+      expect(gap).toBeGreaterThan(door.range + checkpoint.interactRange);
+    }
   });
 });

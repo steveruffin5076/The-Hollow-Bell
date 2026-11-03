@@ -91,7 +91,9 @@ export const MAPS: Record<MapId, MapDef> = {
     id: "approach",
     title: "Watchtower Road",
     room: approachRoom,
-    checkpoint: { id: "approach-road", position: at(4, 10), anchor: at(4, 7), interactRange: 48 },
+    // The stone sits far enough west that resting from any side of it stays outside
+    // the wraith's and the archer's aggro range (checked in phase7.test.ts).
+    checkpoint: { id: "approach-road", position: at(2, 10), anchor: at(4, 7), interactRange: 48 },
     doors: [
       { id: "to-town", pos: at(2, 7), range: 36, label: "F: return to town", to: "town", arrive: "town-square" },
       { id: "to-tower", pos: at(15, 7), range: 40, label: "F: enter the watchtower", to: "watchtower", arrive: "watchtower-door" },

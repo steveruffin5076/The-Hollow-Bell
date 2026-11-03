@@ -12,6 +12,8 @@ const ZERO: Vec2 = { x: 0, y: 0 };
  * At the health threshold, if the clue is known and no outcome is committed,
  * he stops once and waits for the choice. Decline resumes the fight.
  * reset() is a full restore, including the choice, so a death can offer it again.
+ * A spared or defeated Watchman is settled: reset() leaves him as he is, so a rest
+ * in the tower cannot bring him back after the outcome is committed.
  */
 export class Boss implements Hittable {
   readonly health = new Health(BOSS.maxHp);
@@ -48,7 +50,13 @@ export class Boss implements Hittable {
     return this.health.alive && this.state !== "spared";
   }
 
+  /** True once he is spared or dead. The outcome is committed at that moment. */
+  get settled(): boolean {
+    return this.state === "spared" || this.state === "dead";
+  }
+
   reset(): void {
+    if (this.settled) return;
     this.health.restore();
     this.pos = { ...this.spawn };
     this.swing = null;

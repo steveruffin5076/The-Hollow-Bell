@@ -126,7 +126,7 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 **Known issues:**
 - Art is flat shapes. The road enemies reset on each visit, which is intended practice, and the screen can get crowded if you fight on top of the entrance.
 - The ending shows again after a reload until you choose Keep walking. It no longer shows on every door.
-- The road rest stone is 256 units from the wraith, and the wraith chases at 240. Walking up to rest usually starts a fight. Standing on the exact centre of the stone does not.
+- The road rest stone was 256 units from the wraith, and the wraith chases at 240. Fixed on 3 Nov 2026 (see below).
 
 ## Doorway fix (3 Nov 2026)
 
@@ -138,4 +138,17 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 
 **User check:** confirmed fixed.
 
-**Next:** your play of the remaining rest-stone issue, then acceptance of the prototype. Nothing past Phase 9 is authorised.
+## Watchman revive and road rest stone fixes (3 Nov 2026)
+
+**Bug 1 – Resting in the watchtower revived the Watchman.** After you spared or killed him, a rest in the same visit reset him to 140/140 HP and idle, and he fought again. Beating him a second time showed a false reward message. Fix: a spared or dead boss is settled, and `Boss.reset()` now leaves him as he is (`src/combat/boss.ts`). A reset before the outcome still fully restores him and offers the choice again.
+
+**Bug 2 – The road rest stone woke the wraith.** The stone moved from tile (4, 10) to (2, 10). From the nearest point you can rest from, the wraith is now 272 units away (aggro 240) and the archer is 398 (aggro 280). The stone is still clear of the town door. The arrival and respawn point stays at (4, 7).
+
+**Checks:**
+- `npm run typecheck`: passed.
+- `npm test`: 8 files, 131 tests passed. New tests: "a rest does not bring back a spared or defeated Watchman" and "road rest stone can be used from any side without waking the wraith or the archer".
+- Browser (Chromium, dev server, 1280×720): I loaded a road save and walked to the stone. "F: rest" appeared, the rest worked, and the wraith stayed idle at its spawn point. There were no console errors. The watchtower revive fix was checked only by unit test, not in the browser.
+
+**Still open:** you can rest during a fight to get full health and heals back. This is a design question and is not changed. In the tower, the Watchman's aggro range (340) covers the door stone, which is intended for the arena.
+
+**Next:** your check of both fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
