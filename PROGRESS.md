@@ -117,7 +117,7 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - One later doorway from the road back to town worked after the rest stone was moved off the exit. An earlier five-trip loop was blocked because the ending reopened on every doorway and the rest stone covered the exit. Both of those are fixed. Ten uninterrupted loops were not repeated after the fix.
 
 **Not played in the browser:**
-- The kill ending. Unit tests cover the exclusive outcome, the sword reward, and a reload of that save.
+- The kill ending. Played in the browser on 3 Nov 2026 (see below).
 - A hit that interrupts a heal. The Phase 3 unit test still covers it.
 - Firefox and Safari.
 - Fighting at 1920×1080 or a narrow window. The production canvas did resize to those sizes without a page error. The playthrough itself was at 1280×720.
@@ -172,5 +172,20 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - `npm run typecheck`: passed. `npm run build`: passed.
 - `npm test`: 8 files, 135 tests passed. New tests cover erasing the slot and backup while keeping settings with no write until a save point, and a new game with no storage.
 - Browser (Chromium, dev server, 1280×720): I seeded a save and a backup, then clicked New game and Erase on the title. Town opened with XP 0, and both keys were gone. After a reload, the title showed only New game. There were no console errors. The ending panel's "New game" path uses the same function but was not clicked in the browser.
+
+## Kill ending browser play (3 Nov 2026)
+
+**Method:** Chromium, dev server, 1280×720. A scripted player used real keyboard and mouse input. A test-only entry point (served by the test, not in the repo) let it read game state to steer and to check results. It started from a seeded save in the watchtower: clue known, level-up damage, Ash Ward equipped, 40 XP.
+
+**Results (all passed, no console errors):**
+- During the fight, the first Echo Strike showed "Where did you get his sword?".
+- At 70 HP, the choice panel opened. "2. Keep fighting" showed "The Watchman raises his blade again." and the fight went on.
+- The kill showed "Aldren's Blade is yours. Press I to see it." Outcome became kill, status guardian-resolved, XP went from 40 to 60, and Aldren's Blade was owned and equipped. There was no Watchman's Vow. The player did not die.
+- A rest at the tower stone after the kill left the Watchman dead (confirms the revive fix in the browser).
+- The tower exit led to the road beside the tower door. The road door led to town.
+- Bram: "You brought his sword, not the charm. Then he is gone. I will remember the blade." "1. Then this is finished." completed the quest and opened the kill ending: "The tower is quiet. Bram hangs the blade by the forge and says the name where the bell cannot reach." Aldren was not in the square (only Bram, Mara, Oren).
+- After a reload and Continue: town, outcome kill, status complete, Aldren's Blade equipped, XP 60. The ending showed again (known behaviour). The journal read "Outcome: the Watchman fell. Aldren's Blade is yours." The equipment panel listed Aldren's Blade (worn), Ash Ward (worn), Grave Iron (bag).
+
+**New issue found (not fixed):** Messages shown in the same frame replace each other, so only the last one is seen. On the kill, "Experience +20" is replaced at once by "Aldren's Blade is yours" (XP did rise to 60). If Echo was never used, the fallback line "Where did you get his sword?" replaces the blade message on a kill. On a spare, the spare message replaces the fallback line. Cause: `say()` in `src/scenes/PlayScene.ts` keeps one message.
 
 **Next:** your check of the four fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
