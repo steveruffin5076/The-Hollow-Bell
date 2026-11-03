@@ -186,6 +186,18 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - Bram: "You brought his sword, not the charm. Then he is gone. I will remember the blade." "1. Then this is finished." completed the quest and opened the kill ending: "The tower is quiet. Bram hangs the blade by the forge and says the name where the bell cannot reach." Aldren was not in the square (only Bram, Mara, Oren).
 - After a reload and Continue: town, outcome kill, status complete, Aldren's Blade equipped, XP 60. The ending showed again (known behaviour). The journal read "Outcome: the Watchman fell. Aldren's Blade is yours." The equipment panel listed Aldren's Blade (worn), Ash Ward (worn), Grave Iron (bag).
 
-**New issue found (not fixed):** Messages shown in the same frame replace each other, so only the last one is seen. On the kill, "Experience +20" is replaced at once by "Aldren's Blade is yours" (XP did rise to 60). If Echo was never used, the fallback line "Where did you get his sword?" replaces the blade message on a kill. On a spare, the spare message replaces the fallback line. Cause: `say()` in `src/scenes/PlayScene.ts` keeps one message.
+**New issue found (fixed below):** Messages shown in the same frame replace each other, so only the last one is seen. On the kill, "Experience +20" is replaced at once by "Aldren's Blade is yours" (XP did rise to 60). If Echo was never used, the fallback line "Where did you get his sword?" replaces the blade message on a kill. On a spare, the spare message replaces the fallback line. Cause: `say()` in `src/scenes/PlayScene.ts` keeps one message.
 
-**Next:** your check of the four fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
+## Message queue fix (3 Nov 2026)
+
+**Change:** On-screen messages now go through a queue (`src/core/messages.ts`) in both the adventure and the combat lab. Messages raised together show one after another, in order. A lone message shows for 2.6 s (2.2 s in the lab). When another is waiting, the current one moves on after 1.4 s (1.2 s in the lab). A repeat of the message showing or of the last one waiting is dropped. At most 3 wait, and the oldest waiting one is dropped first. Messages raised during a modal or a paused tab are not skipped.
+
+**Checks:**
+- `npm run typecheck`: passed. `npm run build`: passed.
+- `npm test`: 9 files, 141 tests passed. Six new queue tests: order, full time, repeats, limit, long pause, clear.
+- Browser (Chromium, dev server, 1280×720, same scripted player as the kill run, no console errors):
+  - Kill: "Echo Strike", "Where did you get his sword?", "The Watchman raises his blade again.", "Echo Strike", "Experience +20", "Aldren's Blade is yours. Press I to see it." all showed. Before the fix, "Experience +20" and the first "Echo Strike" were never seen.
+  - Spare with Echo never used: "Where did you get his sword?" then "You spoke his name. He keeps the charm. The Watchman's Vow is yours." both showed. Before the fix, the first was replaced at once.
+- The combat lab was not played in the browser after this change.
+
+**Next:** your check of the five fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.

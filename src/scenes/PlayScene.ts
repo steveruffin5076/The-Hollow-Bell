@@ -9,6 +9,7 @@ import { applySwing, wedgePoints, type Swing } from "../combat/hit";
 import { PlayerCombat, type PlayerInput } from "../combat/player";
 import { simulationDelta } from "../core/clock";
 import { moveCircle } from "../core/collision";
+import { MessageQueue } from "../core/messages";
 import { KeyboardPointerInput } from "../core/input";
 import { inputToWorldDirection } from "../core/movement";
 import { groundDepth, screenToWorld, worldToScreen, type Vec2 } from "../core/projection";
@@ -58,7 +59,7 @@ export class PlayScene extends Phaser.Scene {
   private focusPaused = false;
   private mode: Mode = "play";
   private page: DialoguePage | null = null;
-  private messageUntil = 0;
+  private messages = new MessageQueue();
   private modal: Phaser.GameObjects.GameObject[] = [];
   private fx!: Phaser.GameObjects.Graphics;
   private pickupMarks = new Map<string, Phaser.GameObjects.Arc>();
@@ -87,7 +88,7 @@ export class PlayScene extends Phaser.Scene {
     this.focusPaused = false;
     this.mode = "play";
     this.page = null;
-    this.messageUntil = 0;
+    this.messages = new MessageQueue();
     this.modal = [];
     this.aim = { x: 1, y: 0 };
 
@@ -614,7 +615,9 @@ export class PlayScene extends Phaser.Scene {
     this.room.update(this.player.pos, frameDt, BODY_W, BODY_H);
     this.cameras.main.centerOn(Math.round(hs.x), Math.round(hs.y - BODY_H / 2));
     this.promptText.setText(this.prompt());
-    if (this.time.now > this.messageUntil && this.mode === "play") this.messageText.setVisible(false);
+    const message = this.messages.current(this.time.now);
+    if (message === null) this.messageText.setVisible(false);
+    else if (this.messageText.text !== message || !this.messageText.visible) this.messageText.setText(message).setVisible(true);
     this.pauseText.setVisible(this.focusPaused && this.mode === "play");
   }
 
@@ -729,9 +732,9 @@ export class PlayScene extends Phaser.Scene {
     this.bolts = [];
   }
 
+  /** Queues a message. Messages raised together show one after another. */
   private say(text: string): void {
-    this.messageText.setText(text).setVisible(true);
-    this.messageUntil = this.time.now + 2600;
+    this.messages.push(text, this.time.now);
   }
 
   private down(name: string): boolean {

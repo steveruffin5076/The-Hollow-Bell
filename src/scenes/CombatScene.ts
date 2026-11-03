@@ -5,6 +5,7 @@ import { applySwing, wedgePoints, type HitOutcome, type Swing } from "../combat/
 import { onPlayerSwingOutcome } from "../combat/outcome";
 import { PlayerCombat, type PlayerInput } from "../combat/player";
 import { simulationDelta } from "../core/clock";
+import { MessageQueue } from "../core/messages";
 import { moveCircle } from "../core/collision";
 import { KeyboardPointerInput } from "../core/input";
 import { inputToWorldDirection } from "../core/movement";
@@ -27,7 +28,6 @@ const PLAYER_ID = 1;
 const ENEMY_ID = 2;
 const BODY_W = 16;
 const BODY_H = 34;
-const MESSAGE_SECONDS = 2.2;
 
 /**
  * Combat laboratory: one room, one hero, one melee enemy, one rest point,
@@ -47,7 +47,7 @@ export class CombatScene extends Phaser.Scene {
   private hitStop = 0;
   private paused = false;
   private restarting = false;
-  private messageUntil = 0;
+  private messages = new MessageQueue(2200, 1200);
 
   private heroNode!: Phaser.GameObjects.Container;
   private heroBody!: Phaser.GameObjects.Rectangle;
@@ -83,7 +83,7 @@ export class CombatScene extends Phaser.Scene {
     this.hitStop = 0;
     this.paused = false;
     this.restarting = false;
-    this.messageUntil = 0;
+    this.messages = new MessageQueue(2200, 1200);
 
     this.cameras.main.setBackgroundColor("#0b0a10");
     this.cameras.main.setRoundPixels(true);
@@ -264,8 +264,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   private say(text: string): void {
-    this.messageText.setText(text).setVisible(true);
-    this.messageUntil = this.time.now + MESSAGE_SECONDS * 1000;
+    this.messages.push(text, this.time.now);
   }
 
   // ---- per-frame ----
@@ -419,7 +418,9 @@ export class CombatScene extends Phaser.Scene {
     const near = this.checkpoints.canRest(COMBAT_CHECKPOINT, player);
     this.promptText.setVisible(near);
 
-    if (this.time.now > this.messageUntil) this.messageText.setVisible(false);
+    const message = this.messages.current(this.time.now);
+    if (message === null) this.messageText.setVisible(false);
+    else if (this.messageText.text !== message || !this.messageText.visible) this.messageText.setText(message).setVisible(true);
 
     this.room.update(player.pos, frameDt, BODY_W, BODY_H);
     this.cameras.main.centerOn(Math.round(hs.x), Math.round(hs.y - BODY_H / 2));
