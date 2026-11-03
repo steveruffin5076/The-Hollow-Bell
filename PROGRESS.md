@@ -198,6 +198,21 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - Browser (Chromium, dev server, 1280×720, same scripted player as the kill run, no console errors):
   - Kill: "Echo Strike", "Where did you get his sword?", "The Watchman raises his blade again.", "Echo Strike", "Experience +20", "Aldren's Blade is yours. Press I to see it." all showed. Before the fix, "Experience +20" and the first "Echo Strike" were never seen.
   - Spare with Echo never used: "Where did you get his sword?" then "You spoke his name. He keeps the charm. The Watchman's Vow is yours." both showed. Before the fix, the first was replaced at once.
-- The combat lab was not played in the browser after this change.
+- The combat lab was played afterwards (see below).
+
+## Combat lab browser play (3 Nov 2026)
+
+**Method:** Chromium, dev server, 1280×720, the same scripted player (real input, state read through a test-only entry point), two runs from a clear browser store. There were no console errors.
+
+**Results:**
+- Three missed swings left Echo at 0.
+- The first kill showed "Reward: Ash Token (total 1)". The floor pickup showed "Reward: Ash Token (total 2)" and gave 2 tokens.
+- `Q` at full health did nothing (100 HP, 3 heals kept).
+- Rest showed "F: rest" and "Rested. Checkpoint saved, enemy reset." It restored the enemy to 40/40 and kept 2 tokens. The lab still allows a rest at any time, as intended.
+- A second kill gave no token (still 2).
+- `E` with a full meter showed "Echo Strike!", emptied the meter, and fired once.
+- After a hit took HP to 85, `Q` showed "Healed" and spent one charge (3 → 2). HP read 85 again 2.5 s later while the enemy was chasing. This is most likely a heal to 100 followed by a 15-damage hit, but the run did not record HP between the two.
+- Death showed "You died / R: respawn at checkpoint / N: new run". `R` showed "Respawned at checkpoint", put the player at the committed stone anchor with 100 HP, and kept 2 tokens. `N` started a clean run: 0 tokens, enemy 40/40 idle, hero at the start.
+- The message queue showed each lab message. No message in these runs was raised in the same frame as another, so the lab's burst case is covered only by unit tests.
 
 **Next:** your check of the five fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
