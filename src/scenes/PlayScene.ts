@@ -3,7 +3,7 @@ import { Sfx } from "../audio/sfx";
 import { EnemyArcher } from "../combat/archer";
 import { Bolt } from "../combat/bolt";
 import { Boss } from "../combat/boss";
-import { CheckpointState } from "../combat/checkpoint";
+import { CheckpointState, anyEngaged } from "../combat/checkpoint";
 import { EnemyMelee } from "../combat/enemy";
 import { applySwing, wedgePoints, type Swing } from "../combat/hit";
 import { PlayerCombat, type PlayerInput } from "../combat/player";
@@ -266,14 +266,19 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
     const door = this.nearestDoor();
-    const restHere = this.checkpoints.canRest(this.map.checkpoint, this.player);
+    const engaged = this.inFight();
+    const restHere = this.checkpoints.canRest(this.map.checkpoint, this.player, engaged);
     const doorDist = door ? Math.hypot(door.pos.x - this.player.pos.x, door.pos.y - this.player.pos.y) : Infinity;
     const restDist = Math.hypot(this.map.checkpoint.position.x - this.player.pos.x, this.map.checkpoint.position.y - this.player.pos.y);
     if (door && (!restHere || doorDist < restDist)) {
       this.go(door);
       return;
     }
-    if (this.checkpoints.rest(this.map.checkpoint, this.player, this.resetables())) {
+    if (engaged && this.checkpoints.atStone(this.map.checkpoint, this.player)) {
+      this.say("You cannot rest while an enemy is hunting you.");
+      return;
+    }
+    if (this.checkpoints.rest(this.map.checkpoint, this.player, this.resetables(), engaged)) {
       this.clearBolts();
       session.checkpointId = this.map.checkpoint.id;
       persistActive(browserStorage());
@@ -681,7 +686,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.mode !== "play") return "";
     const npc = this.nearestNpc();
     if (npc && (npc.id !== "watchman" || getActiveSession().story.outcome === "spare")) return "F: talk";
-    if (this.checkpoints.canRest(this.map.checkpoint, this.player)) return "F: rest";
+    if (this.checkpoints.atStone(this.map.checkpoint, this.player)) return this.inFight() ? "Cannot rest during a fight" : "F: rest";
     const door = this.nearestDoor();
     return door ? door.label : "";
   }
@@ -699,10 +704,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private inFight(): boolean {
-    return this.actors.some((actor) => {
-      const state = actor.melee?.state ?? actor.archer?.state ?? actor.boss?.state;
-      return state === "chase" || state === "telegraph" || state === "attack" || state === "recover" || state === "choice";
-    });
+    return anyEngaged(this.actors.map((actor) => actor.melee?.state ?? actor.archer?.state ?? actor.boss?.state ?? "idle"));
   }
 
   private resetables(): { reset(): void }[] {

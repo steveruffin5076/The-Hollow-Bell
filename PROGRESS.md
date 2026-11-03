@@ -149,6 +149,17 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - `npm test`: 8 files, 131 tests passed. New tests: "a rest does not bring back a spared or defeated Watchman" and "road rest stone can be used from any side without waking the wraith or the archer".
 - Browser (Chromium, dev server, 1280×720): I loaded a road save and walked to the stone. "F: rest" appeared, the rest worked, and the wraith stayed idle at its spawn point. There were no console errors. The watchtower revive fix was checked only by unit test, not in the browser.
 
-**Still open:** you can rest during a fight to get full health and heals back. This is a design question and is not changed. In the tower, the Watchman's aggro range (340) covers the door stone, which is intended for the arena.
+**Note:** In the tower, the Watchman's aggro range (340) covers the door stone, which is intended for the arena.
 
-**Next:** your check of both fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
+## No resting during a fight (3 Nov 2026)
+
+**Change:** In the adventure, a rest is refused while any enemy is chasing, telegraphing, attacking, recovering, or while the Watchman waits for the choice. Near the stone, the prompt reads "Cannot rest during a fight", and F shows "You cannot rest while an enemy is hunting you." Nothing is restored or reset on a refused rest. The rule is in `src/combat/checkpoint.ts` (`anyEngaged`, `canRest(..., engaged)`). The Phase 3 combat lab is not changed and still allows a rest at any time.
+
+**Effect on play:** Enemies do not give up the chase. To rest, you win the fight, leave through a door, or fall. In the tower, the Watchman wakes as soon as you arrive, so you cannot rest there until he is spared or defeated. The tower door is still your respawn point.
+
+**Checks:**
+- `npm run typecheck`: passed.
+- `npm test`: 8 files, 133 tests passed. New tests cover a refused rest while an enemy chases (health, charges, and enemy state unchanged) and which states count as engaged.
+- Browser (Chromium, dev server, 1280×720): I woke the wraith and walked back to the road stone. The prompt read "Cannot rest during a fight", and HP and heals did not change. After the wraith was killed (XP 20), the prompt read "F: rest", the rest worked, and the wraith reset at its spawn point. There were no console errors. The refusal message text was not captured in a screenshot.
+
+**Next:** your check of the three fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.

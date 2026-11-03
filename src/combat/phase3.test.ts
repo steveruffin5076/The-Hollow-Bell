@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ECHO, ENEMY, HEAL, PLAYER } from "../data/combatConfig";
 import { RewardLedger, tryCollect } from "../progression/rewards";
-import { CheckpointState, type CheckpointDef } from "./checkpoint";
+import { CheckpointState, anyEngaged, type CheckpointDef } from "./checkpoint";
 import { EchoMeter, EchoStrike } from "./echo";
 import { EnemyMelee } from "./enemy";
 import { applySwing, resolveHit, type Swing } from "./hit";
@@ -460,6 +460,30 @@ describe("checkpoint rest", () => {
     q.state = "dead";
     expect(cp.rest(STONE, q, [e])).toBe(false);
     expect(cp.committedId).toBe("start");
+  });
+
+  it("is refused while an enemy is engaged, and changes nothing", () => {
+    const { p, e, cp } = setup();
+    p.health.damage(40);
+    p.healCharges = 1;
+    e.pos = { x: 200, y: 100 };
+    e.update(STEP, p.pos, true);
+    expect(e.state).toBe("chase");
+    const engaged = anyEngaged([e.state]);
+    expect(engaged).toBe(true);
+    expect(cp.canRest(STONE, p, engaged)).toBe(false);
+    expect(cp.atStone(STONE, p)).toBe(true);
+    expect(cp.rest(STONE, p, [e], engaged)).toBe(false);
+    expect(p.health.hp).toBe(PLAYER.maxHp - 40);
+    expect(p.healCharges).toBe(1);
+    expect(e.state).toBe("chase");
+    expect(cp.committedId).toBe("start");
+  });
+
+  it("counts chase, telegraph, attack, recover and the Watchman's choice as engaged", () => {
+    for (const state of ["chase", "telegraph", "attack", "recover", "choice"]) expect(anyEngaged(["idle", state])).toBe(true);
+    expect(anyEngaged(["idle", "dead", "spared"])).toBe(false);
+    expect(anyEngaged([])).toBe(false);
   });
 
   it("a refused rest changes nothing", () => {

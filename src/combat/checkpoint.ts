@@ -18,7 +18,7 @@ export interface CheckpointDef {
 /**
  * Reset rules (see ARCHITECTURE.md):
  *
- * REST (at a checkpoint, player idle or moving, within range):
+ * REST (at a checkpoint, player idle or moving, within range, no enemy engaged):
  *   - commits this checkpoint as the respawn anchor
  *   - player: full health, full heal charges, Echo empty, no pending swing or Echo Strike
  *   - every normal enemy: back at spawn, alive, full health, idle, no pending swing
@@ -28,7 +28,18 @@ export interface CheckpointDef {
  *   last committed anchor. Enemies reset too.
  *
  * Neither touches persistent rewards. Those live in the RewardLedger.
+ *
+ * An enemy is engaged while it chases, telegraphs, attacks or recovers, or while the
+ * Watchman waits for the choice. The adventure passes that in, so a rest cannot be
+ * used to refill health mid-fight. Enemies do not give up the chase on their own:
+ * the player wins, leaves through a door, or falls.
  */
+export const ENGAGED_STATES: readonly string[] = ["chase", "telegraph", "attack", "recover", "choice"];
+
+export function anyEngaged(states: readonly string[]): boolean {
+  return states.some((state) => ENGAGED_STATES.includes(state));
+}
+
 export class CheckpointState {
   committedId: string;
   committedAnchor: Vec2;
@@ -38,16 +49,21 @@ export class CheckpointState {
     this.committedAnchor = { ...startAnchor };
   }
 
-  canRest(def: CheckpointDef, player: PlayerCombat): boolean {
+  /** In range and able to act. Says nothing about nearby enemies. */
+  atStone(def: CheckpointDef, player: PlayerCombat): boolean {
     if (!player.alive) return false;
     if (player.state !== "idle" && player.state !== "move") return false;
     const d = Math.hypot(player.pos.x - def.position.x, player.pos.y - def.position.y);
     return d <= def.interactRange;
   }
 
+  canRest(def: CheckpointDef, player: PlayerCombat, engaged = false): boolean {
+    return !engaged && this.atStone(def, player);
+  }
+
   /** Returns true if the rest happened. */
-  rest(def: CheckpointDef, player: PlayerCombat, enemies: readonly Resettable[]): boolean {
-    if (!this.canRest(def, player)) return false;
+  rest(def: CheckpointDef, player: PlayerCombat, enemies: readonly Resettable[], engaged = false): boolean {
+    if (!this.canRest(def, player, engaged)) return false;
     this.committedId = def.id;
     this.committedAnchor = { ...def.anchor };
     player.restoreFull();
