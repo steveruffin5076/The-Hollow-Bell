@@ -15,7 +15,7 @@ import { groundDepth, screenToWorld, worldToScreen, type Vec2 } from "../core/pr
 import { ARCHER, BOSS, ENEMY, FEEDBACK, FIXED_STEP, MAX_STEPS_PER_FRAME, PLAYER } from "../data/combatConfig";
 import { ITEMS, LEVEL_HP, LEVEL_XP, XP_AWARDS, type LevelChoice } from "../data/content";
 import { MAPS, anchorFor, type DoorDef, type MapDef, type NpcDef } from "../data/world";
-import { freshSession, getActiveSession, persistActive, setActiveSession } from "../game/session";
+import { beginNewGame, getActiveSession, persistActive } from "../game/session";
 import { getSettings, patchSettings } from "../game/settingsState";
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH, SCENE_KEYS } from "../game/config";
 import { openingLine, type DialoguePage } from "../narrative/dialogue";
@@ -416,10 +416,7 @@ export class PlayScene extends Phaser.Scene {
 
   private pickConfirm(index: number): void {
     if (index === 0) {
-      const storage = browserStorage();
-      if (storage) storage.removeItem("hollow-bell-save");
-      setActiveSession(freshSession());
-      persistActive(storage);
+      beginNewGame(browserStorage());
       this.scene.start(SCENE_KEYS.play);
     } else if (index === 1) {
       this.closeModal();

@@ -18,7 +18,7 @@ import {
   resolveGuardian,
   type Story,
 } from "../narrative/story";
-import { writeSave, type SaveData, type StorageLike } from "../persistence/save";
+import { clearSave, writeSave, type SaveData, type StorageLike } from "../persistence/save";
 import { Loadout, computeMods, type CombatMods } from "../progression/loadout";
 import { Progression, type XpGrant } from "../progression/xp";
 
@@ -161,6 +161,19 @@ export function persistActive(storage: StorageLike | null): void {
   }
   const wrote = writeSave(storage, session.toSave());
   session.storageWarning = !wrote.ok;
+}
+
+/**
+ * New game after the player confirmed the erase. Clears the slot and its backup and
+ * writes nothing: the first save is the first doorway, rest, pickup or choice, so the
+ * title offers Continue only once there is real progress to continue.
+ */
+export function beginNewGame(storage: StorageLike | null): Session {
+  if (storage) clearSave(storage);
+  const session = freshSession();
+  session.storageWarning = storage === null;
+  setActiveSession(session);
+  return session;
 }
 
 export function sessionFromSave(save: SaveData): Session {

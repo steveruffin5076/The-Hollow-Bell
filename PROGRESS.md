@@ -162,4 +162,15 @@ The user asked for every remaining phase in one pass, then a playthrough. These 
 - `npm test`: 8 files, 133 tests passed. New tests cover a refused rest while an enemy chases (health, charges, and enemy state unchanged) and which states count as engaged.
 - Browser (Chromium, dev server, 1280×720): I woke the wraith and walked back to the road stone. The prompt read "Cannot rest during a fight", and HP and heals did not change. After the wraith was killed (XP 20), the prompt read "F: rest", the rest worked, and the wraith reset at its spawn point. There were no console errors. The refusal message text was not captured in a screenshot.
 
-**Next:** your check of the three fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.
+## New game save fix (3 Nov 2026)
+
+**Problem:** "Erase and begin" (ending panel) and "Erase" (title screen) removed the save and then wrote a fresh empty save at once. After that, the title showed Continue for a game with no progress. The backup of a broken save (`hollow-bell-save-backup`) was never removed, although the README said it would be. Both scenes repeated the save key as a literal string.
+
+**Change:** Both paths now call one function, `beginNewGame()` (`src/game/session.ts`). It clears the save and the backup through `clearSave()`, keeps settings, and writes nothing. The first save is the first doorway, rest, pickup or choice, as before. If storage is blocked, the "will not be saved" warning still shows.
+
+**Checks:**
+- `npm run typecheck`: passed. `npm run build`: passed.
+- `npm test`: 8 files, 135 tests passed. New tests cover erasing the slot and backup while keeping settings with no write until a save point, and a new game with no storage.
+- Browser (Chromium, dev server, 1280×720): I seeded a save and a backup, then clicked New game and Erase on the title. Town opened with XP 0, and both keys were gone. After a reload, the title showed only New game. There were no console errors. The ending panel's "New game" path uses the same function but was not clicked in the browser.
+
+**Next:** your check of the four fixes, then acceptance of the prototype. Nothing past Phase 9 is authorised.

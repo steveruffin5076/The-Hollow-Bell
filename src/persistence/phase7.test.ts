@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ARCHER, ENEMY } from "../data/combatConfig";
 import { MAPS, anchorFor } from "../data/world";
-import { freshSession, sessionFromSave } from "../game/session";
+import { beginNewGame, freshSession, getActiveSession, persistActive, sessionFromSave, setActiveSession } from "../game/session";
 import { MemoryStorage, loadSave, loadSettings, saveSettings, writeSave } from "./save";
 
 describe("saves", () => {
@@ -122,5 +122,35 @@ describe("road rest stone", () => {
       const gap = Math.hypot(door.pos.x - checkpoint.position.x, door.pos.y - checkpoint.position.y);
       expect(gap).toBeGreaterThan(door.range + checkpoint.interactRange);
     }
+  });
+});
+
+describe("new game", () => {
+  it("erases the slot and the backup, keeps settings, and writes nothing until a save point", () => {
+    const storage = new MemoryStorage();
+    const old = freshSession();
+    old.grantXp("yard-wraith", 40);
+    writeSave(storage, old.toSave());
+    storage.setItem("hollow-bell-save-backup", "{not json");
+    saveSettings(storage, { master: 0.7, muted: true, shake: false, reducedFlash: true });
+
+    const session = beginNewGame(storage);
+    expect(getActiveSession()).toBe(session);
+    expect(session.progression.total).toBe(0);
+    expect(session.storageWarning).toBe(false);
+    expect(storage.getItem("hollow-bell-save")).toBeNull();
+    expect(storage.getItem("hollow-bell-save-backup")).toBeNull();
+    expect(loadSave(storage)).toEqual({ ok: false, reason: "empty" });
+    expect(loadSettings(storage).muted).toBe(true);
+
+    persistActive(storage);
+    expect(loadSave(storage).ok).toBe(true);
+  });
+
+  it("warns when there is no storage and still starts", () => {
+    setActiveSession(freshSession());
+    const session = beginNewGame(null);
+    expect(session.storageWarning).toBe(true);
+    expect(getActiveSession()).toBe(session);
   });
 });

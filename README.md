@@ -55,7 +55,7 @@ Continue loads the one save on this browser. Enter continues when a save exists,
 
 ## Save
 
-One save slot in `localStorage` (`hollow-bell-save`). It is written at a doorway, a rest, a pickup, a level choice, an equipment change, and when the Watchman is resolved. Dying or refreshing during a fight returns you to the last of those points. Unsaved blows in that fight are lost. The outcome and its reward are saved together. Settings are a separate key (`hollow-bell-settings`). If storage is blocked, the game tells you and keeps going for the session. A broken save is copied to `hollow-bell-save-backup` and is not deleted until you confirm a new game.
+One save slot in `localStorage` (`hollow-bell-save`). It is written at a doorway, a rest, a pickup, a level choice, an equipment change, and when the Watchman is resolved. Dying or refreshing during a fight returns you to the last of those points. Unsaved blows in that fight are lost. The outcome and its reward are saved together. Settings are a separate key (`hollow-bell-settings`). If storage is blocked, the game tells you and keeps going for the session. A broken save is copied to `hollow-bell-save-backup` and is not deleted until you confirm a new game. Confirming a new game erases the save and the backup, keeps settings, and writes nothing until the first save point, so the title shows Continue only after real progress.
 
 ## Hosting
 

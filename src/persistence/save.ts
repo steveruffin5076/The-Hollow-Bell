@@ -97,11 +97,14 @@ export function loadSave(storage: StorageLike): LoadResult {
   return { ok: true, save: checked };
 }
 
+/** Erases the save slot and any backup of a broken save. Settings are kept. */
 export function clearSave(storage: StorageLike): void {
-  try {
-    storage.removeItem(SAVE_KEY);
-  } catch {
-    // A failed delete still leaves the game playable for this session.
+  for (const key of [SAVE_KEY, BACKUP_KEY]) {
+    try {
+      storage.removeItem(key);
+    } catch {
+      // A failed delete still leaves the game playable for this session.
+    }
   }
 }
 

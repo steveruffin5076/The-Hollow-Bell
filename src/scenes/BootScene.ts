@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { Sfx } from "../audio/sfx";
-import { freshSession, persistActive, sessionFromSave, setActiveSession } from "../game/session";
+import { beginNewGame, sessionFromSave, setActiveSession } from "../game/session";
 import { replaceSettings } from "../game/settingsState";
 import {
   GAME_TITLE,
@@ -137,10 +137,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private startNew(): void {
-    const storage = browserStorage();
-    if (storage) storage.removeItem("hollow-bell-save");
-    setActiveSession(freshSession());
-    persistActive(storage);
+    beginNewGame(browserStorage());
     this.go(SCENE_KEYS.play);
   }
 
